@@ -13,7 +13,7 @@ class OrderRepository:
         return order
 
     def get_all(self) -> List[Order]:
-        # Swapped to pure synchronous query formatting
+       
         return self.db.query(Order).order_by(Order.created_at.asc()).all()
 
     def get_by_id(self, order_id: int) -> Order | None:

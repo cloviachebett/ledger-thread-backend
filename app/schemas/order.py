@@ -10,6 +10,12 @@ class OrderBase(BaseModel):
 class OrderCreate(OrderBase):
     pass
 
+
+
+class OrderUpdateProgress(BaseModel):
+    is_done: bool
+
+
 class OrderResponse(OrderBase):
     id: int
     balance_due: float

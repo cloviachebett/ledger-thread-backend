@@ -14,11 +14,11 @@ class CustomerService:
         return self.repository.create(schema)
 
     def list_customers(self):
-        # REMOVED 'await' here
+       
         return self.repository.get_all()
 
     def get_customer_profile(self, customer_id: int):
-        # REMOVED 'await' here
+       
         customer = self.repository.get_by_id(customer_id)
         if not customer:
             raise HTTPException(status_code=404, detail="Customer records not found")

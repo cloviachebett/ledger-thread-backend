@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 from app.repositories.order import OrderRepository
 from app.repositories.customer import CustomerRepository
 from app.schemas.order import OrderCreate
 from app.models.order import Order
+
 
 class OrderService:
     def __init__(self, db: Session):
@@ -19,7 +20,9 @@ class OrderService:
     def create_order(self, schema: OrderCreate):
         customer = self.customer_repository.get_by_id(schema.customer_id)
         if not customer:
-            raise HTTPException(status_code=404, detail="Assigned customer profiles do not exist")
+            raise HTTPException(
+                status_code=404, detail="Assigned customer profiles do not exist"
+            )
 
         balance, status = self.calculate_billing(schema.total_cost, schema.amount_paid)
         db_order = Order(
@@ -28,28 +31,45 @@ class OrderService:
             total_cost=schema.total_cost,
             amount_paid=schema.amount_paid,
             balance_due=balance,
-            status=status
+            status=status,
         )
         return self.repository.create(db_order)
 
     def list_orders(self):
-        # REMOVED 'await' here
+      
         return self.repository.get_all()
 
     def apply_payment(self, order_id: int, payment_amount: float):
         order = self.repository.get_by_id(order_id)
         if not order:
             raise HTTPException(status_code=404, detail="Order details not found")
-        
+
         if order.status == "Fully Paid":
-            raise HTTPException(status_code=400, detail="This invoice billing ledger is already fully cleared")
+            raise HTTPException(
+                status_code=400,
+                detail="This invoice billing ledger is already fully cleared",
+            )
 
         updated_paid = order.amount_paid + payment_amount
         balance, status = self.calculate_billing(order.total_cost, updated_paid)
-        
+
         order.amount_paid = updated_paid
         order.balance_due = balance
         order.status = status
+
+        self.repository.db.commit()
+        self.repository.db.refresh(order)
+        return order
+
+    def toggle_progress(self, order_id: int, is_done: bool):
+        
+        order = self.repository.get_by_id(order_id)
+        if not order:
+            raise HTTPException(status_code=404, detail="Order details not found")
+
+        
+        order.is_done = is_done
+
         
         self.repository.db.commit()
         self.repository.db.refresh(order)
