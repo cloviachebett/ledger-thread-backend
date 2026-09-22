@@ -21,6 +21,7 @@ class OrderResponse(OrderBase):
     balance_due: float
     status: str
     created_at: datetime
+    is_done: bool
 
     class Config:
         from_attributes = True

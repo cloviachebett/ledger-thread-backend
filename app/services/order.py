@@ -24,14 +24,16 @@ class OrderService:
                 status_code=404, detail="Assigned customer profiles do not exist"
             )
 
-        balance, status = self.calculate_billing(schema.total_cost, schema.amount_paid)
+        # Note: named order_status (not `status`) so it doesn't shadow the
+        # `fastapi.status` module imported above.
+        balance, order_status = self.calculate_billing(schema.total_cost, schema.amount_paid)
         db_order = Order(
             customer_id=schema.customer_id,
             clothing_type=schema.clothing_type,
             total_cost=schema.total_cost,
             amount_paid=schema.amount_paid,
             balance_due=balance,
-            status=status,
+            status=order_status,
         )
         return self.repository.create(db_order)
 
@@ -51,11 +53,11 @@ class OrderService:
             )
 
         updated_paid = order.amount_paid + payment_amount
-        balance, status = self.calculate_billing(order.total_cost, updated_paid)
+        balance, order_status = self.calculate_billing(order.total_cost, updated_paid)
 
         order.amount_paid = updated_paid
         order.balance_due = balance
-        order.status = status
+        order.status = order_status
 
         self.repository.db.commit()
         self.repository.db.refresh(order)
